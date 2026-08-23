@@ -1,0 +1,43 @@
+# GitHub Actions workflow — обновляет feed.json из Telegram-канала.
+# Положить в ОТДЕЛЬНЫЙ ПУБЛИЧНЫЙ репозиторий по пути:  .github/workflows/tg-feed.yml
+# (рядом с ним в корне — fetch_feed.py). feed.json появится в корне репо.
+name: tg-feed
+
+on:
+  schedule:
+    - cron: "17 * * * *"      # каждый час в :17 (UTC)
+  workflow_dispatch: {}         # ручной запуск кнопкой
+  push:
+    branches: [ main ]          # обновить сразу после правок
+
+permissions:
+  contents: write               # чтобы коммитить feed.json
+
+concurrency:
+  group: tg-feed
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Fetch latest posts
+        run: python3 fetch_feed.py --channel dr_rabdanova --out feed.json --limit 3
+
+      - name: Commit if changed
+        run: |
+          git config user.name  "tg-feed-bot"
+          git config user.email "actions@users.noreply.github.com"
+          if ! git diff --quiet -- feed.json; then
+            git add feed.json
+            git commit -m "feed: update $(date -u +%FT%TZ)"
+            git push
+          else
+            echo "no changes"
+          fi
