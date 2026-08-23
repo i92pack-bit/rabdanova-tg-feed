@@ -28,7 +28,7 @@ jobs:
           python-version: "3.12"
 
       - name: Fetch latest posts
-        run: python3 fetch_feed.py --channel dr_rabdanova --out feed.json --limit 3
+        run: python3 fetch_feed.py --channel dr_rabdanova --out feed.json --limit 6
 
       - name: Commit if changed
         run: |
